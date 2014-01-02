@@ -5,6 +5,7 @@
 #include <string.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 #include <iostream>
 
@@ -16,9 +17,9 @@
 
 static void map(const char* path, const char** begin_addr, const char** end_addr)
 {
-  int fd;
-  struct stat buf;
-  void *addr;
+  int     fd;
+  struct  stat buf;
+  void*   addr;
 
   if ((fd = open(path, O_RDONLY)) == -1)
     err(2, "%s", path);
@@ -29,19 +30,29 @@ static void map(const char* path, const char** begin_addr, const char** end_addr
   if ((addr = mmap(NULL, buf.st_size, PROT_READ, MAP_SHARED, fd, 0)) == MAP_FAILED)
     err(2, "mmap(%s)", path);
 
+  close(fd);
+
   *begin_addr = (const char*) addr;
   *end_addr = (const char*) addr + buf.st_size;
 }
 
+static void unmap(const char* begin_addr, const char* end_addr)
+{
+  munmap((void*) begin_addr, end_addr - begin_addr);
+}
+
 int main(int argc, char** argv)
 {
-  const char* addr;
+  const char* begin_addr;
   const char* end_addr;
+  const char* addr;
 
   if (argc != 2)
     errx(1, "requires one argument");
 
-  map(argv[1], &addr, &end_addr);
+  map(argv[1], &begin_addr, &end_addr);
+
+  addr = begin_addr;
 
   if (memcmp(addr, MBDB_SIG, MBDB_SIG_LEN) != 0)
     errx(2, "%s: is not a valid MBDB file", argv[1]);
@@ -52,6 +63,8 @@ int main(int argc, char** argv)
     auto r = mbdb_record(addr);
     r.dump(std::cout);
   }
+
+  unmap(begin_addr, end_addr);
 
   return 0;
 }
