@@ -1,6 +1,7 @@
 #include "mbdb_record.h"
 
-#include <err.h>
+#include "syscall_err.h"
+
 #include <fcntl.h>
 #include <libgen.h>
 #include <string.h>
@@ -11,9 +12,6 @@
 #include <list>
 #include <iostream>
 
-#define PACKED          __attribute__((__packed__))
-#define ASIZEOF(Array)  (sizeof (Array) / sizeof (Array[0]))
-
 #define MBDB_SIG        "mbdb\5\0"
 #define MBDB_SIG_LEN    ((sizeof MBDB_SIG) - 1)
 
@@ -23,14 +21,11 @@ static void map(const char* path, const char** begin_addr, const char** end_addr
   struct  stat buf;
   void*   addr;
 
-  if ((fd = open(path, O_RDONLY)) == -1)
-    err(2, "%s", path);
-
-  if (fstat(fd, &buf) == -1)
-    err(2, "fstat(%s)", path);
+  fd = SYSCALL_ERR(open, path, O_RDONLY);
+  SYSCALL_ERR(stat, path, &buf);
 
   if ((addr = mmap(NULL, buf.st_size, PROT_READ, MAP_SHARED, fd, 0)) == MAP_FAILED)
-    err(2, "mmap(%s)", path);
+    err(EXIT_FAILURE, "mmap(%s)", path);
 
   close(fd);
 

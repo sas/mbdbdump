@@ -1,14 +1,13 @@
 #include "mbdb_record.h"
 
 #include "mbdb_read.h"
+#include "syscall_err.h"
 
 #include <arpa/inet.h>
-#include <err.h>
-#include <errno.h>
 #include <fcntl.h>
 #include <openssl/sha.h>
-#include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 #include <vector>
@@ -84,8 +83,46 @@ void mbdb_record::dump(std::ostream& out) const
   out << this->storage_hash << " " << this->domain << "/" << this->path << std::endl;
 }
 
+static bool extract_file(const std::string& out, const std::string& in, bool empty)
+{
+  bool    res = false;
+  int     in_fd;
+  int     out_fd;
+  ssize_t size;
+  char    buf[4096];
+
+  if ((out_fd = SYSCALL_WARN(open, out.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666)) == -1)
+    goto cleanup_out;
+
+  if (empty) {
+    res = true;
+    goto cleanup_out;
+  }
+
+  if ((in_fd = SYSCALL_WARN(open, in.c_str(), O_RDONLY)) == -1)
+    goto cleanup_in;
+
+  while ((size = read(in_fd, buf, sizeof buf)) > 0)
+    write(out_fd, buf, size);
+
+  res = true;
+
+cleanup_in:
+  close(in_fd);
+cleanup_out:
+  close(out_fd);
+
+  return res;
+}
+
+static bool extract_dir(const std::string& out)
+{
+  return SYSCALL_WARN(mkdir, out.c_str(), 0777) == 0;
+}
+
 void mbdb_record::extract(const char* mbdb_dir) const
 {
+  bool        res = false;
   std::string target_path;
 
   target_path.reserve(this->domain.size() + sizeof '/' + this->path.size());
@@ -97,44 +134,18 @@ void mbdb_record::extract(const char* mbdb_dir) const
 
   if (this->mode & S_IFREG) {
     std::string in_path;
-    int         in_fd;
-    int         out_fd;
-    ssize_t     size;
-    char        buf[4096];
-
-    if ((out_fd = open(target_path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666)) == -1) {
-      warn("%s", target_path.c_str());
-      goto cleanup_out;
-    }
-
-    if (this->size == 0)
-      goto cleanup_out;
 
     in_path.reserve(strlen(mbdb_dir) + sizeof '/' + 2 * SHA_DIGEST_LENGTH);
     in_path.append(mbdb_dir);
     in_path.append("/");
     in_path.append(this->storage_hash);
 
-    if ((in_fd = open(in_path.c_str(), O_RDONLY)) == -1) {
-      warn("%s", in_path.c_str());
-      goto cleanup_in;
-    }
-
-    while ((size = read(in_fd, buf, sizeof buf)) > 0)
-      write(out_fd, buf, size);
-
-cleanup_in:
-    close(in_fd);
-cleanup_out:
-    close(out_fd);
+    res = extract_file(target_path, in_path, this->size == 0);
   } else if (this->mode & S_IFDIR) {
-    if (mkdir(target_path.c_str(), 0777) == -1 && errno != EEXIST)
-      err(1, "%s", target_path.c_str());
-  } else {
-    warnx("%s: unknown file type, skipping", target_path.c_str());
-    return;
+    res = extract_dir(target_path);
   }
 
-  if (chmod(target_path.c_str(), this->mode & 0777) == -1)
-    warn("%s", target_path.c_str());
+  if (res) {
+    SYSCALL_WARN(chmod, target_path.c_str(), this->mode & 0777);
+  }
 }
