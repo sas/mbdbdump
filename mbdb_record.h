@@ -11,6 +11,7 @@ struct mbdb_record {
 
   mbdb_record(const char*& addr);
   void dump(std::ostream& out) const;
+  void extract(const char* mbdb_dir) const;
 
   std::string domain;
   std::string path;

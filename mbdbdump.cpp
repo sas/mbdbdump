@@ -2,6 +2,7 @@
 
 #include <err.h>
 #include <fcntl.h>
+#include <libgen.h>
 #include <string.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -42,12 +43,12 @@ static void unmap(const char* begin_addr, const char* end_addr)
   munmap((void*) begin_addr, end_addr - begin_addr);
 }
 
-void usage_die(void)
+void usage_die(char* argv0)
 {
-  extern char *__progname; /* from crt0.o */
+  const char* base = basename(argv0);
 
   std::cerr
-    << "usage: " << __progname << " MBDB_FILE [ list | extract ]" << std::endl
+    << "usage: " << base << " MBDB_FILE [ list | extract ]" << std::endl
     << "       list:    list contents of the backup" << std::endl
     << "       extract: extract contents of the backup to the current directory" << std::endl;
 
@@ -62,7 +63,7 @@ int main(int argc, char** argv)
   std::list<mbdb_record>  contents;
 
   if (argc < 2)
-    usage_die();
+    usage_die(argv[0]);
 
   map(argv[1], &begin_addr, &end_addr);
 
@@ -76,13 +77,17 @@ int main(int argc, char** argv)
   while (addr < end_addr)
     contents.push_back(mbdb_record(addr));
 
-  if (argc == 2 || strcmp(argv[2], "list") == 0)
-    for (auto& e : contents)
+  if (argc == 2 || strcmp(argv[2], "list") == 0) {
+    for (const auto& e : contents)
       e.dump(std::cout);
-  else if (strcmp(argv[2], "extract") == 0)
-    std::clog << "extraction not yet implemented." << std::endl;
-  else
-    usage_die();
+  } else if (strcmp(argv[2], "extract") == 0) {
+    const char* dir = dirname(argv[1]);
+
+    for (const auto& e : contents)
+      e.extract(dir);
+  } else {
+    usage_die(argv[0]);
+  }
 
   unmap(begin_addr, end_addr);
 
