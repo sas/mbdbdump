@@ -26,6 +26,8 @@ struct mbdb_record {
   uint64_t    size;
   uint8_t     flag;
   prop_table  properties;
+
+  std::string storage_hash;
 };
 
 #endif /* !MBDB_RECORD_H_ */

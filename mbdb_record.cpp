@@ -23,13 +23,13 @@ static void hash2str(const T hash, std::string& output)
   }
 }
 
-static std::string hash_file_name(const mbdb_record* rec)
+static std::string generate_storage_hash(const std::string& domain, const std::string& path)
 {
   std::string   hash_input;
   unsigned char hash[SHA_DIGEST_LENGTH];
   std::string   hash_str;
 
-  hash_input = rec->domain + "-" + rec->path;
+  hash_input = domain + "-" + path;
   SHA1((unsigned char*) hash_input.c_str(), hash_input.size(), hash);
   hash2str(std::vector<uint8_t>(hash, hash + SHA_DIGEST_LENGTH), hash_str);
 
@@ -74,11 +74,13 @@ mbdb_record::mbdb_record(const char*& addr)
 
     this->properties[name] = value;
   }
+
+  this->storage_hash = generate_storage_hash(this->domain, this->path);
 }
 
 void mbdb_record::dump(std::ostream& out) const
 {
-  out << hash_file_name(this) << " " << this->path << std::endl;
+  out << this->storage_hash << " " << this->path << std::endl;
 }
 
 void mbdb_record::extract(const char* mbdb_dir) const
@@ -96,7 +98,7 @@ void mbdb_record::extract(const char* mbdb_dir) const
     in_path.reserve(strlen(mbdb_dir) + sizeof '/' + 2 * SHA_DIGEST_LENGTH);
     in_path.append(mbdb_dir);
     in_path.append("/");
-    in_path.append(hash_file_name(this));
+    in_path.append(this->storage_hash);
 
     if ((in_fd = open(in_path.c_str(), O_RDONLY)) == -1) {
       warn("%s", in_path.c_str());
