@@ -80,7 +80,7 @@ mbdb_record::mbdb_record(const char*& addr)
 
 void mbdb_record::dump(std::ostream& out) const
 {
-  out << this->storage_hash << " " << this->path << " (" << this->domain << ")" << std::endl;
+  out << this->storage_hash << " " << this->domain << "/" << this->path << std::endl;
 }
 
 void mbdb_record::extract(const char* mbdb_dir) const
