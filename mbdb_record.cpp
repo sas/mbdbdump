@@ -80,20 +80,31 @@ mbdb_record::mbdb_record(const char*& addr)
 
 void mbdb_record::dump(std::ostream& out) const
 {
-  out << this->storage_hash << " " << this->path << std::endl;
+  out << this->storage_hash << " " << this->path << " (" << this->domain << ")" << std::endl;
 }
 
 void mbdb_record::extract(const char* mbdb_dir) const
 {
-  if (this->path.size() == 0)
-    return;
-
   if (this->mode & S_IFREG) {
+    std::string out_path;
     std::string in_path;
     int         in_fd;
     int         out_fd;
     ssize_t     size;
     char        buf[4096];
+
+    out_path.reserve(this->domain.size() + sizeof '/' + this->path.size());
+    out_path.append(this->domain);
+    out_path.append("/");
+    out_path.append(this->path);
+
+    if ((out_fd = open(out_path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666)) == -1) {
+      warn("%s", out_path.c_str());
+      goto cleanup_out;
+    }
+
+    if (this->size == 0)
+      goto cleanup_out;
 
     in_path.reserve(strlen(mbdb_dir) + sizeof '/' + 2 * SHA_DIGEST_LENGTH);
     in_path.append(mbdb_dir);
@@ -101,29 +112,37 @@ void mbdb_record::extract(const char* mbdb_dir) const
     in_path.append(this->storage_hash);
 
     if ((in_fd = open(in_path.c_str(), O_RDONLY)) == -1) {
-      warn("%s", in_path.c_str());
+      warn("trying to extract %s: %s", this->path.c_str(), in_path.c_str());
       goto cleanup_in;
-    }
-
-    if ((out_fd = open(this->path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666)) == -1) {
-      warn("%s", this->path.c_str());
-      goto cleanup_out;
     }
 
     while ((size = read(in_fd, buf, sizeof buf)) > 0)
       write(out_fd, buf, size);
 
-cleanup_out:
-    close(out_fd);
 cleanup_in:
     close(in_fd);
+cleanup_out:
+    close(out_fd);
   } else if (this->mode & S_IFDIR) {
-    int ret;
+    if (this->path.size() == 0) {
+      /*
+       * If the path is empty, this entry was just a place holder for the
+       * initial domain dir.
+       */
+      if (mkdir(this->domain.c_str(), 0777) == -1 && errno != EEXIST)
+        err(1, "%s", this->domain.c_str());
+    } else {
+      std::string full_path;
 
-    ret = mkdir(this->path.c_str(), 0777);
 
-    if (ret == -1 && errno != EEXIST)
-      err(1, "%s", this->path.c_str());
+      full_path.reserve(this->domain.size() + sizeof '/' + this->path.size());
+      full_path.append(this->domain);
+      full_path.append("/");
+      full_path.append(this->path);
+
+      if (mkdir(full_path.c_str(), 0777) == -1 && errno != EEXIST)
+        err(1, "%s", full_path.c_str());
+    }
   } else {
     warnx("%s: unknown file type, skipping", this->path.c_str());
     return;
