@@ -7,6 +7,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <openssl/sha.h>
+#include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -85,21 +86,24 @@ void mbdb_record::dump(std::ostream& out) const
 
 void mbdb_record::extract(const char* mbdb_dir) const
 {
+  std::string target_path;
+
+  target_path.reserve(this->domain.size() + sizeof '/' + this->path.size());
+  target_path.append(this->domain);
+  if (this->path.size() > 0) {
+    target_path.append("/");
+    target_path.append(this->path);
+  }
+
   if (this->mode & S_IFREG) {
-    std::string out_path;
     std::string in_path;
     int         in_fd;
     int         out_fd;
     ssize_t     size;
     char        buf[4096];
 
-    out_path.reserve(this->domain.size() + sizeof '/' + this->path.size());
-    out_path.append(this->domain);
-    out_path.append("/");
-    out_path.append(this->path);
-
-    if ((out_fd = open(out_path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666)) == -1) {
-      warn("%s", out_path.c_str());
+    if ((out_fd = open(target_path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666)) == -1) {
+      warn("%s", target_path.c_str());
       goto cleanup_out;
     }
 
@@ -112,7 +116,7 @@ void mbdb_record::extract(const char* mbdb_dir) const
     in_path.append(this->storage_hash);
 
     if ((in_fd = open(in_path.c_str(), O_RDONLY)) == -1) {
-      warn("trying to extract %s: %s", this->path.c_str(), in_path.c_str());
+      warn("%s", in_path.c_str());
       goto cleanup_in;
     }
 
@@ -124,27 +128,13 @@ cleanup_in:
 cleanup_out:
     close(out_fd);
   } else if (this->mode & S_IFDIR) {
-    if (this->path.size() == 0) {
-      /*
-       * If the path is empty, this entry was just a place holder for the
-       * initial domain dir.
-       */
-      if (mkdir(this->domain.c_str(), 0777) == -1 && errno != EEXIST)
-        err(1, "%s", this->domain.c_str());
-    } else {
-      std::string full_path;
-
-
-      full_path.reserve(this->domain.size() + sizeof '/' + this->path.size());
-      full_path.append(this->domain);
-      full_path.append("/");
-      full_path.append(this->path);
-
-      if (mkdir(full_path.c_str(), 0777) == -1 && errno != EEXIST)
-        err(1, "%s", full_path.c_str());
-    }
+    if (mkdir(target_path.c_str(), 0777) == -1 && errno != EEXIST)
+      err(1, "%s", target_path.c_str());
   } else {
-    warnx("%s: unknown file type, skipping", this->path.c_str());
+    warnx("%s: unknown file type, skipping", target_path.c_str());
     return;
   }
+
+  if (chmod(target_path.c_str(), this->mode & 0777) == -1)
+    warn("%s", target_path.c_str());
 }
