@@ -7,6 +7,7 @@
 #include <fcntl.h>
 #include <openssl/sha.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <sys/types.h>
 #include <unistd.h>
 
@@ -146,6 +147,14 @@ void mbdb_record::extract(const char* mbdb_dir) const
   }
 
   if (res) {
+    struct timeval times[2];
+
+    times[0].tv_sec = this->atime;
+    times[0].tv_usec = 0;
+    times[1].tv_sec = this->mtime;
+    times[1].tv_usec = 0;
+
     SYSCALL_WARN(chmod, target_path.c_str(), this->mode & 0777);
+    SYSCALL_WARN(utimes, target_path.c_str(), times);
   }
 }
