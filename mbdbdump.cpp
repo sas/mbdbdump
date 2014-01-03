@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include <list>
 #include <iostream>
 
 #define PACKED          __attribute__((__packed__))
@@ -41,14 +42,27 @@ static void unmap(const char* begin_addr, const char* end_addr)
   munmap((void*) begin_addr, end_addr - begin_addr);
 }
 
+void usage_die(void)
+{
+  extern char *__progname; /* from crt0.o */
+
+  std::cerr
+    << "usage: " << __progname << " MBDB_FILE [ list | extract ]" << std::endl
+    << "       list:    list contents of the backup" << std::endl
+    << "       extract: extract contents of the backup to the current directory" << std::endl;
+
+  exit(EXIT_FAILURE);
+}
+
 int main(int argc, char** argv)
 {
-  const char* begin_addr;
-  const char* end_addr;
-  const char* addr;
+  const char*             begin_addr;
+  const char*             end_addr;
+  const char*             addr;
+  std::list<mbdb_record>  contents;
 
-  if (argc != 2)
-    errx(1, "requires one argument");
+  if (argc < 2)
+    usage_die();
 
   map(argv[1], &begin_addr, &end_addr);
 
@@ -59,12 +73,18 @@ int main(int argc, char** argv)
 
   addr += MBDB_SIG_LEN;
 
-  while (addr < end_addr) {
-    auto r = mbdb_record(addr);
-    r.dump(std::cout);
-  }
+  while (addr < end_addr)
+    contents.push_back(mbdb_record(addr));
+
+  if (argc == 2 || strcmp(argv[2], "list") == 0)
+    for (auto& e : contents)
+      e.dump(std::cout);
+  else if (strcmp(argv[2], "extract") == 0)
+    std::clog << "extraction not yet implemented." << std::endl;
+  else
+    usage_die();
 
   unmap(begin_addr, end_addr);
 
-  return 0;
+  return EXIT_SUCCESS;
 }
