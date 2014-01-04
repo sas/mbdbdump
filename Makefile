@@ -1,17 +1,17 @@
-CC	:= clang++
-CFLAGS	:= -Wall -Wextra -Wno-deprecated-declarations -std=c++11
-LDFLAGS	:= `pkg-config --libs openssl`
+CXX		?= g++
+CXXFLAGS	:= -Wall -Wextra -Wno-deprecated-declarations -std=c++11
+LDFLAGS		:= `pkg-config --libs openssl`
 
-TARGET	:= mbdbdump
-SOURCES	:= mbdbdump.cpp mbdb_record.cpp
-OBJECTS	:= $(SOURCES:.cpp=.o)
-DEPENDS	:= $(SOURCES:.cpp=.d)
+TARGET		:= mbdbdump
+SOURCES		:= mbdbdump.cpp mbdb_record.cpp
+OBJECTS		:= $(SOURCES:.cpp=.o)
+DEPENDS		:= $(SOURCES:.cpp=.d)
 
 $(TARGET): $(OBJECTS)
-	$(CC) $(LDFLAGS) -o $@ $^
+	$(CXX) $(LDFLAGS) -o $@ $^
 
 %.o: %.cpp
-	$(CC) $(CFLAGS) -MMD -o $@ -c $<
+	$(CXX) $(CXXFLAGS) -MMD -o $@ -c $<
 
 clean:
 	rm -f $(OBJECTS)
