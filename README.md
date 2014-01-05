@@ -7,6 +7,13 @@ This tool is used to dump contents of an MBDB backup.
 
 Just type `make` :)
 
+Or, for an out-of-tree build:
+```
+mkdir build
+cd build
+make -f ../Makefile
+```
+
 You will need GNU make for this, and this tool depends on OpenSSL.
 
 ## Usage

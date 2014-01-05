@@ -7,10 +7,13 @@ SOURCES		:= mbdbdump.cpp mbdb_record.cpp
 OBJECTS		:= $(SOURCES:.cpp=.o)
 DEPENDS		:= $(SOURCES:.cpp=.d)
 
+VPATH		 = $(dir $(lastword $(MAKEFILE_LIST)))
+
 $(TARGET): $(OBJECTS)
 	$(CXX) $(LDFLAGS) -o $@ $^
 
 %.o: %.cpp
+	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -MMD -o $@ -c $<
 
 clean:
@@ -20,6 +23,6 @@ clean:
 distclean: clean
 	rm -f $(TARGET)
 
-.PHONY: all clean distclean
+.PHONY: clean distclean
 
 -include $(DEPENDS)
