@@ -10,8 +10,9 @@ struct mbdb_record {
   typedef std::map<std::string, std::string> prop_table;
 
   mbdb_record(const char*& addr);
-  void list(std::ostream& out) const;
+  std::string get_path() const;
   void extract(const char* mbdb_dir) const;
+  void cat(const char* mbdb_dir, const std::string& output) const;
 
   std::string domain;
   std::string path;

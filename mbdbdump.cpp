@@ -2,6 +2,7 @@
 
 #include "syscall_err.h"
 
+#include <errno.h>
 #include <fcntl.h>
 #include <libgen.h>
 #include <string.h>
@@ -43,9 +44,10 @@ void usage_die(char* argv0)
   const char* base = basename(argv0);
 
   std::cerr
-    << "usage: " << base << " MBDB_FILE [ list | extract ]" << std::endl
+    << "usage: " << base << " MBDB_FILE [ list | extract | cat PATH ]" << std::endl
     << "       list:    list contents of the backup" << std::endl
-    << "       extract: extract contents of the backup to the current directory" << std::endl;
+    << "       extract: extract contents of the backup to the current directory" << std::endl
+    << "       cat:     dump contents of a file to standard output" << std::endl;
 
   exit(EXIT_FAILURE);
 }
@@ -74,12 +76,31 @@ int main(int argc, char** argv)
 
   if (argc == 2 || strcmp(argv[2], "list") == 0) {
     for (const auto& e : contents)
-      e.list(std::cout);
+      std::cout << e.get_path() << std::endl;
   } else if (strcmp(argv[2], "extract") == 0) {
     const char* dir = dirname(argv[1]);
 
     for (const auto& e : contents)
       e.extract(dir);
+  } else if (strcmp(argv[2], "cat") == 0) {
+    const char* dir = dirname(argv[1]);
+    bool        did_it = false;
+
+    if (argc != 4)
+      usage_die(argv[0]);
+
+    for (const auto& e : contents) {
+      if (e.get_path() == argv[3]) {
+        e.cat(dir, "/dev/stdout");
+        did_it = true;
+        break;
+      }
+    }
+
+    if (!did_it) {
+      errno = ENOENT;
+      warn("%s", argv[3]);
+    }
   } else {
     usage_die(argv[0]);
   }

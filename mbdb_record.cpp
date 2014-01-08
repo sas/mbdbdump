@@ -79,9 +79,9 @@ mbdb_record::mbdb_record(const char*& addr)
   this->storage_hash = generate_storage_hash(this->domain, this->path);
 }
 
-void mbdb_record::list(std::ostream& out) const
+std::string mbdb_record::get_path() const
 {
-  out << this->domain << "/" << this->path << std::endl;
+  return this->domain + "/" + this->path;
 }
 
 static bool extract_file(const std::string& out, const std::string& in, bool empty)
@@ -157,4 +157,21 @@ void mbdb_record::extract(const char* mbdb_dir) const
     SYSCALL_WARN(chmod, target_path.c_str(), this->mode & 0777);
     SYSCALL_WARN(utimes, target_path.c_str(), times);
   }
+}
+
+void mbdb_record::cat(const char* mbdb_dir, const std::string& output) const
+{
+  std::string in_path;
+
+  if (!(this->mode & S_IFREG)) {
+    warnx("%s: not a file", this->get_path().c_str());
+    return;
+  }
+
+  in_path.reserve(strlen(mbdb_dir) + sizeof '/' + 2 * SHA_DIGEST_LENGTH);
+  in_path.append(mbdb_dir);
+  in_path.append("/");
+  in_path.append(this->storage_hash);
+
+  extract_file(output, in_path, this->size == 0);
 }
