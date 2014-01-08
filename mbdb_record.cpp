@@ -81,7 +81,7 @@ mbdb_record::mbdb_record(const char*& addr)
 
 void mbdb_record::list(std::ostream& out) const
 {
-  out << this->storage_hash << " " << this->domain << "/" << this->path << std::endl;
+  out << this->domain << "/" << this->path << std::endl;
 }
 
 static bool extract_file(const std::string& out, const std::string& in, bool empty)
