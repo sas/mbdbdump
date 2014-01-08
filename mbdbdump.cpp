@@ -67,7 +67,7 @@ int main(int argc, char** argv)
   addr = begin_addr;
 
   if (memcmp(addr, MBDB_SIG, MBDB_SIG_LEN) != 0)
-    errx(2, "%s: is not a valid MBDB file", argv[1]);
+    errx(EXIT_FAILURE, "%s: is not a valid MBDB file", argv[1]);
 
   addr += MBDB_SIG_LEN;
 
