@@ -74,7 +74,7 @@ int main(int argc, char** argv)
 
   if (argc == 2 || strcmp(argv[2], "list") == 0) {
     for (const auto& e : contents)
-      e.dump(std::cout);
+      e.list(std::cout);
   } else if (strcmp(argv[2], "extract") == 0) {
     const char* dir = dirname(argv[1]);
 

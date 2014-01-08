@@ -10,7 +10,7 @@ struct mbdb_record {
   typedef std::map<std::string, std::string> prop_table;
 
   mbdb_record(const char*& addr);
-  void dump(std::ostream& out) const;
+  void list(std::ostream& out) const;
   void extract(const char* mbdb_dir) const;
 
   std::string domain;

@@ -79,7 +79,7 @@ mbdb_record::mbdb_record(const char*& addr)
   this->storage_hash = generate_storage_hash(this->domain, this->path);
 }
 
-void mbdb_record::dump(std::ostream& out) const
+void mbdb_record::list(std::ostream& out) const
 {
   out << this->storage_hash << " " << this->domain << "/" << this->path << std::endl;
 }
