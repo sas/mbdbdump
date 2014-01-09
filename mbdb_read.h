@@ -1,6 +1,8 @@
 #ifndef MBDB_READ_H_
 # define MBDB_READ_H_
 
+# include <arpa/inet.h>
+
 # include <cstdint>
 # include <string>
 # include <vector>
