@@ -17,9 +17,9 @@ all: $(TARGET)
 
 install: all $(DOCTARGETS)
 	install -d $(PREFIX)/bin/
-	install -d $(PREFIX)/share/man/
+	install -d $(PREFIX)/share/man/man1/
 	install -s -t $(PREFIX)/bin/ $(TARGET)
-	install -t $(PREFIX)/share/man/ $(DOCTARGETS)
+	install -t $(PREFIX)/share/man/man1/ $(DOCTARGETS)
 
 clean:
 	rm -f $(OBJECTS)
