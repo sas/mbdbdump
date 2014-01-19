@@ -1,13 +1,13 @@
 CXX		?= g++
-CXXFLAGS	:= -Wall -Wextra -Wno-deprecated-declarations -std=c++11
+CXXFLAGS	:= `pkg-config --cflags openssl` -std=c++11 -Wall -Wextra -Wno-deprecated-declarations
 LDFLAGS		:= `pkg-config --libs openssl`
 
 TARGET		:= mbdbdump
-SOURCES		:= mbdbdump.cpp mbdb_record.cpp
+SOURCES		:= src/mbdbdump.cpp src/mbdb_record.cpp
 OBJECTS		:= $(SOURCES:.cpp=.o)
 DEPENDS		:= $(SOURCES:.cpp=.d)
 
-VPATH		 = $(dir $(lastword $(MAKEFILE_LIST)))
+VPATH		:= $(dir $(lastword $(MAKEFILE_LIST)))
 
 $(TARGET): $(OBJECTS)
 	$(CXX) $(LDFLAGS) -o $@ $^
