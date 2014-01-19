@@ -14,6 +14,7 @@ VPATH		:= $(dir $(lastword $(MAKEFILE_LIST)))
 all: $(TARGET)
 
 install: all
+	install -d $(PREFIX)/bin/
 	install -s -t $(PREFIX)/bin/ $(TARGET)
 
 clean:
