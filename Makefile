@@ -1,5 +1,5 @@
 SOURCES		:= src/mbdbdump.cpp src/mbdb_record.cpp
-DOCSOURCES	:= doc/mbdbdump.1.ronn
+DOCSOURCES	:= doc/mbdbdump.1.md
 PREFIX		:= /usr/local
 
 CXX		?= g++
@@ -9,7 +9,7 @@ LDFLAGS		:= `pkg-config --libs openssl`
 TARGET		:= mbdbdump
 OBJECTS		:= $(SOURCES:.cpp=.o)
 DEPENDS		:= $(SOURCES:.cpp=.d)
-DOCTARGETS	:= $(DOCSOURCES:.1.ronn=.1)
+DOCTARGETS	:= $(DOCSOURCES:.1.md=.1)
 
 VPATH		:= $(dir $(lastword $(MAKEFILE_LIST)))
 
@@ -36,7 +36,7 @@ $(TARGET): $(OBJECTS)
 	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -MMD -o $@ -c $<
 
-%.1: %.1.ronn
+%.1: %.1.md
 	@mkdir -p $(dir $@)
 	ronn --roff --pipe $< >$@
 
