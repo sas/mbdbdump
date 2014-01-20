@@ -13,9 +13,11 @@ DOCTARGETS	:= $(DOCSOURCES:.1.md=.1)
 
 VPATH		:= $(dir $(lastword $(MAKEFILE_LIST)))
 
-all: $(TARGET)
+default: $(TARGET)
 
-install: all $(DOCTARGETS)
+all: $(TARGET) $(DOCTARGETS)
+
+install: all
 	install -d $(PREFIX)/bin/
 	install -d $(PREFIX)/share/man/man1/
 	install -s -t $(PREFIX)/bin/ $(TARGET)
