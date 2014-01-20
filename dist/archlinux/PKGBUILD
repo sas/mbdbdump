@@ -10,7 +10,7 @@ _url="github.com/sas/${_pkgname}"
 url="https://${_url}"
 license=('BSD')
 depends=('openssl')
-makedepends=('git')
+makedepends=('git' 'ruby-ronn')
 source=("repo::git://${_url}")
 md5sums=('SKIP')
 
