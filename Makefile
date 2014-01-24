@@ -1,14 +1,14 @@
 SOURCES		:= src/mbdbdump.cpp src/mbdb_record.cpp
 DOCSOURCES	:= doc/mbdbdump.1.md
-PREFIX		:= /usr/local
 
 CXX		?= g++
 CXXFLAGS	:= `pkg-config --cflags openssl` -std=c++11 -Wall -Wextra -Wno-deprecated-declarations
 LDFLAGS		:= `pkg-config --libs openssl`
+PREFIX		:= /usr/local
 
-TARGET		:= mbdbdump
 OBJECTS		:= $(SOURCES:.cpp=.o)
 DEPENDS		:= $(SOURCES:.cpp=.d)
+TARGET		:= src/mbdbdump
 DOCTARGETS	:= $(DOCSOURCES:.1.md=.1)
 
 VPATH		:= $(dir $(lastword $(MAKEFILE_LIST)))
